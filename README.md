@@ -1,4 +1,6 @@
-# sub-cmd
+[![Go](https://github.com/RIDOS/sub-cmd/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/RIDOS/sub-cmd/actions/workflows/go.yml)
+
+# SUB-CMD
 
 ## Get Strarted
 

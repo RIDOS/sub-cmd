@@ -4,7 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"slices"
 )
+
+var httpMethods = []string{"GET", "POST", "HEAD"}
 
 type httpConfig struct {
 	url  string
@@ -36,6 +39,10 @@ http: <options> server`
 
 	if fs.NArg() != 1 {
 		return ErrNoServerSpecified
+	}
+
+	if !slices.Contains(httpMethods, v) {
+		return ErrInvalidMethod
 	}
 
 	c := httpConfig{verb: v}

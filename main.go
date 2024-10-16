@@ -43,6 +43,11 @@ func handleCommand(w io.Writer, args []string) error {
 		printUsage(w)
 	}
 
+	if errors.Is(err, cmd.ErrInvalidMethod) {
+		fmt.Fprintln(w, err)
+		os.Exit(1)
+	}
+
 	return err
 }
 

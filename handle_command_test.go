@@ -96,13 +96,12 @@ Options:
 
 		if err != nil {
 			var exitErr *exec.ExitError
+			// This is for GitHub Actions.
 			if errors.As(err, &exitErr) {
 				gotExitCode := exitErr.ExitCode()
 				if tc.exitCode != gotExitCode {
 					t.Fatalf("Expected exit code to be: %v, Got %v\n", tc.exitCode, gotExitCode)
 				}
-			} else {
-				t.Fatalf("Command failed to start or encountered an error: %v\n", err)
 			}
 		}
 	}

@@ -38,14 +38,9 @@ func handleCommand(w io.Writer, args []string) error {
 		}
 	}
 
-	if errors.Is(err, cmd.ErrNoServerSpecified) || errors.Is(err, errInvalidSubCommand) {
+	if errors.Is(err, cmd.ErrNoServerSpecified) || errors.Is(err, errInvalidSubCommand) || errors.Is(err, cmd.ErrInvalidMethod) {
 		fmt.Fprintln(w, err)
 		printUsage(w)
-	}
-
-	if errors.Is(err, cmd.ErrInvalidMethod) {
-		fmt.Fprintln(w, err)
-		os.Exit(1)
 	}
 
 	return err

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"os/exec"
 	"testing"
+
+	"github.com/RIDOS/sub-cmd/cmd"
 )
 
 func TestHanldeCommand(t *testing.T) {
@@ -67,6 +69,11 @@ Options:
 			err:      nil,
 			output:   "Execution grpc command\n",
 			exitCode: 0,
+		},
+		{
+			args:     []string{"http", "-verb", "DELETE", "http://localhost"},
+			err:      cmd.ErrInvalidMethod,
+			exitCode: 1,
 		},
 	}
 

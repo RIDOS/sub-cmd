@@ -40,6 +40,6 @@ grpc: <options> server`
 	}
 
 	c.server = fs.Arg(0)
-	fmt.Fprintln(w, "Executing grpc command")
+	fmt.Fprintln(w, "Execution grpc command")
 	return nil
 }

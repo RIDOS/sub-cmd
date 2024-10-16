@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"os/exec"
 	"testing"
 )
 
@@ -26,27 +27,45 @@ Options:
 `
 
 	testConfig := []struct {
-		args   []string
-		output string
-		err    error
+		args     []string
+		output   string
+		err      error
+		exitCode int
 	}{
-		// Test when application start whitout argunets
+		// Test when application start whitout argunets.
 		{
-			args:   []string{},
-			err:    errInvalidSubCommand,
-			output: "Invalid sub-command specified\n" + usgaeMessage,
+			args:     []string{},
+			err:      errInvalidSubCommand,
+			output:   "Invalid sub-command specified\n" + usgaeMessage,
+			exitCode: 1,
 		},
-		// Test when use "-h" in arguments
+		// Test when use "-h" in arguments.
 		{
-			args:   []string{"-h"},
-			err:    nil,
-			output: usgaeMessage,
+			args:     []string{"-h"},
+			err:      nil,
+			output:   usgaeMessage,
+			exitCode: 0,
 		},
-		// Test when use something in arguments
+		// Test when use something in arguments.
 		{
-			args:   []string{"foo"},
-			err:    errInvalidSubCommand,
-			output: "Invalid sub-command specified\n" + usgaeMessage,
+			args:     []string{"foo"},
+			err:      errInvalidSubCommand,
+			output:   "Invalid sub-command specified\n" + usgaeMessage,
+			exitCode: 1,
+		},
+		// Test http app.
+		{
+			args:     []string{"http", "foo"},
+			err:      nil,
+			output:   "Execution http command\n",
+			exitCode: 0,
+		},
+		// Test grpc app.
+		{
+			args:     []string{"grpc", "foo"},
+			err:      nil,
+			output:   "Execution grpc command\n",
+			exitCode: 0,
 		},
 	}
 
@@ -69,5 +88,16 @@ Options:
 			}
 		}
 		byteBuf.Reset()
+
+		// Test exit code.
+		cmd := exec.Command("./console-prog", tc.args...)
+		err = cmd.Run()
+
+		if err != nil {
+			gotExitCode := err.(*exec.ExitError).ExitCode()
+			if tc.exitCode != gotExitCode {
+				t.Fatalf("Expected exception to b: %v, Got %v\n", tc.exitCode, gotExitCode)
+			}
+		}
 	}
 }

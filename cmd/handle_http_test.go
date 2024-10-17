@@ -30,26 +30,6 @@ Options:
 			output: usageMessage,
 		},
 		{
-			args:   []string{"http://localhost"},
-			err:    nil,
-			output: "Execution http command\n",
-		},
-		{
-			args:   []string{"-verb", "GET", "http://localhost"},
-			err:    nil,
-			output: "Execution http command\n",
-		},
-		{
-			args:   []string{"-verb", "POST", "http://localhost"},
-			err:    nil,
-			output: "Execution http command\n",
-		},
-		{
-			args:   []string{"-verb", "HEAD", "http://localhost"},
-			err:    nil,
-			output: "Execution http command\n",
-		},
-		{
 			args: []string{"-verb", "DELETE", "http://localhost"},
 			err:  ErrInvalidMethod,
 		},

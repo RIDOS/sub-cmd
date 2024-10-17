@@ -7,28 +7,75 @@ import (
 	"testing"
 )
 
-func startTestHTTPServer() *httptest.Server {
+func startTestHTTPServer(response string) *httptest.Server {
 	ts := httptest.NewServer(http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			fmt.Fprint(w, "Hello World!")
+			if r.Method == http.MethodHead {
+				w.Header().Set("Content-Length", fmt.Sprint(len(response)))
+			}
+			fmt.Fprint(w, response)
 		}))
 	return ts
 }
 
 func TestFetchRemoteResource(t *testing.T) {
-	ts := startTestHTTPServer()
-	defer ts.Close()
-
-	expected := "Hello World!"
-
-	testConfig := httpConfig{url: ts.URL, verb: "GET"}
-
-	data, err := fetchRemoteResource(testConfig)
-	if err != nil {
-		t.Fatal(err)
+	testConfig := []struct {
+		request  string
+		response string
+		method   string
+		err      error
+	}{
+		{
+			request:  "Hello World!",
+			response: "Hello World!",
+			method:   "GET",
+		},
+		// This method not respone ther head.
+		{
+			request:  "",
+			response: "Hello World!",
+			method:   "HEAD",
+		},
+		{
+			request:  "Hello World!",
+			response: "Hello World!",
+			method:   "POST",
+		},
+		{
+			request:  "",
+			response: "Hello World!",
+			method:   "DELETE",
+			err:      ErrInvalidMethod,
+		},
+		{
+			request:  "",
+			response: "Hello World!",
+			method:   "UPDATE",
+			err:      ErrInvalidMethod,
+		},
+		{
+			request:  "",
+			response: "Hello World!",
+			method:   "PUT",
+			err:      ErrInvalidMethod,
+		},
 	}
 
-	if string(data) != expected {
-		t.Errorf("Expected %s, got %s", expected, string(data))
+	for _, tc := range testConfig {
+		ts := startTestHTTPServer(tc.response)
+		defer ts.Close()
+
+		expected := tc.request
+
+		testConfig := httpConfig{url: ts.URL, verb: tc.method}
+
+		data, err := fetchRemoteResource(testConfig)
+		if err != nil && err.Error() != tc.err.Error() {
+			t.Fatal(err)
+		}
+
+		if string(data) != expected {
+			t.Errorf("Expected %s, got %s", expected, string(data))
+		}
 	}
 }

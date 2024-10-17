@@ -63,12 +63,14 @@ func fetchRemoteResource(hc httpConfig) ([]byte, error) {
 	var r *http.Response
 
 	switch hc.verb {
+	case "GET":
+		r, err = http.Get(hc.url)
 	case "HEAD":
 		r, err = http.Head(hc.url)
 	case "POST":
 		r, err = http.Post(hc.url, "application/json", nil)
 	default:
-		r, err = http.Get(hc.url)
+		err = ErrInvalidMethod
 	}
 
 	if err != nil {

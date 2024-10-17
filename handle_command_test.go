@@ -58,10 +58,9 @@ Options:
 		},
 		// Test http app.
 		{
-			args:     []string{"http", "foo"},
-			err:      nil,
-			output:   "Execution http command\n",
-			exitCode: 0,
+			args:     []string{"http", "--help"},
+			err:      errors.New("flag: help requested"),
+			exitCode: 1,
 		},
 		// Test grpc app.
 		{

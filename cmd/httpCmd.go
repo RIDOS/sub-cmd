@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"net/http"
 	"slices"
 )
 
@@ -47,6 +48,34 @@ http: <options> server`
 
 	c := httpConfig{verb: v}
 	c.url = fs.Arg(0)
-	fmt.Fprintln(w, "Execution http command")
+
+	body, err := fetchRemoteResource(c)
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(w, "%s\n", body)
+
 	return nil
+}
+
+func fetchRemoteResource(hc httpConfig) ([]byte, error) {
+	var err error
+	var r *http.Response
+
+	switch hc.verb {
+	case "GET":
+		r, err = http.Get(hc.url)
+	case "HEAD":
+		r, err = http.Head(hc.url)
+	case "POST":
+		r, err = http.Post(hc.url, "application/json", nil)
+	default:
+		err = ErrInvalidMethod
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	defer r.Body.Close()
+	return io.ReadAll(r.Body)
 }

@@ -1,14 +1,17 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	"github.com/RIDOS/sub-cmd/cmd"
 )
 
+var totalDuration time.Duration = 5
 var errInvalidSubCommand = errors.New("Invalid sub-command specified")
 
 func printUsage(w io.Writer) {
@@ -47,8 +50,23 @@ func handleCommand(w io.Writer, args []string) error {
 }
 
 func main() {
-	err := handleCommand(os.Stdout, os.Args[1:])
-	if err != nil {
-		os.Exit(1)
+	allowedDuration := totalDuration * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), allowedDuration)
+	defer cancel()
+
+	chanel := make(chan error, 1)
+
+	go func() {
+		err := handleCommand(os.Stdout, os.Args[1:])
+		chanel <- err
+	}()
+
+	select {
+	case <-ctx.Done():
+		os.Exit(0)
+	case err := <-chanel:
+		if err != nil {
+			os.Exit(1)
+		}
 	}
 }

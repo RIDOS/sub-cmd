@@ -12,6 +12,8 @@ http: A HTTP client.
 http: <options> server
 
 Options: 
+  -o string
+    	Wtite response in file output.html
   -verb string
     	HTTP method (default "GET")
 `

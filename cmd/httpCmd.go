@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 )
 
 const (
@@ -13,6 +14,7 @@ const (
 	MethodHead = "HEAD"
 )
 
+var outputFileName string = "output.html"
 var httpMethods = []string{MethodGet, MethodPost, MethodHead}
 
 type httpConfig struct {
@@ -20,11 +22,42 @@ type httpConfig struct {
 	verb string
 }
 
+type OutputStrategy interface {
+	WriteOutput(data []byte) error
+}
+
+type ConsoleOutput struct {
+	wirter io.Writer
+}
+
+func (c *ConsoleOutput) WriteOutput(data []byte) error {
+	_, err := fmt.Fprintf(c.wirter, "%s\n", data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type FileOutput struct {
+	filePath string
+}
+
+func (fileOutput *FileOutput) WriteOutput(data []byte) error {
+	err := os.WriteFile(fileOutput.filePath+outputFileName, data, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func HandleHttp(w io.Writer, args []string) error {
 	var httpVerb string
+	var filePath string
 	fs := flag.NewFlagSet("http", flag.ContinueOnError)
 	fs.SetOutput(w)
 	fs.StringVar(&httpVerb, "verb", "GET", "HTTP method")
+	fs.StringVar(&filePath, "o", "", "Wtite response in file "+outputFileName)
 
 	fs.Usage = func() {
 		var usageString = `
@@ -47,7 +80,7 @@ http: <options> server`
 		return ErrNoServerSpecified
 	}
 
-	if isValidHttpMethod(httpVerb) {
+	if !isValidHttpMethod(httpVerb) {
 		return ErrInvalidMethod
 	}
 
@@ -58,7 +91,27 @@ http: <options> server`
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(w, "%s\n", body)
+
+	var outputStrategy OutputStrategy
+	if filePath != "" {
+		outputStrategy = &FileOutput{filePath: filePath}
+	} else {
+		outputStrategy = &ConsoleOutput{wirter: w}
+	}
+
+	err = outputStrategy.WriteOutput(body)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func writeOutput(filePath string, response []byte) error {
+	err := os.WriteFile(filePath+outputFileName, response, 0644)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

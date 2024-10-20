@@ -22,15 +22,15 @@ type httpConfig struct {
 	verb string
 }
 
-type OutputStrategy interface {
-	WriteOutput(data []byte) error
+type Output interface {
+	Write(data []byte) error
 }
 
 type ConsoleOutput struct {
 	wirter io.Writer
 }
 
-func (c *ConsoleOutput) WriteOutput(data []byte) error {
+func (c *ConsoleOutput) Write(data []byte) error {
 	_, err := fmt.Fprintf(c.wirter, "%s\n", data)
 	if err != nil {
 		return err
@@ -42,7 +42,7 @@ type FileOutput struct {
 	filePath string
 }
 
-func (fileOutput *FileOutput) WriteOutput(data []byte) error {
+func (fileOutput *FileOutput) Write(data []byte) error {
 	err := os.WriteFile(fileOutput.filePath+outputFileName, data, 0644)
 	if err != nil {
 		return err
@@ -92,23 +92,14 @@ http: <options> server`
 		return err
 	}
 
-	var outputStrategy OutputStrategy
+	var output Output
 	if filePath != "" {
-		outputStrategy = &FileOutput{filePath: filePath}
+		output = &FileOutput{filePath: filePath}
 	} else {
-		outputStrategy = &ConsoleOutput{wirter: w}
+		output = &ConsoleOutput{wirter: w}
 	}
 
-	err = outputStrategy.WriteOutput(body)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func writeOutput(filePath string, response []byte) error {
-	err := os.WriteFile(filePath+outputFileName, response, 0644)
+	err = output.Write(body)
 	if err != nil {
 		return err
 	}

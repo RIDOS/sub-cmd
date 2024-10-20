@@ -5,10 +5,15 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"slices"
 )
 
-var httpMethods = []string{"GET", "POST", "HEAD"}
+const (
+	MethodGet  = "GET"
+	MethodPost = "POST"
+	MethodHead = "HEAD"
+)
+
+var httpMethods = []string{MethodGet, MethodPost, MethodHead}
 
 type httpConfig struct {
 	url  string
@@ -16,10 +21,10 @@ type httpConfig struct {
 }
 
 func HandleHttp(w io.Writer, args []string) error {
-	var v string
+	var httpVerb string
 	fs := flag.NewFlagSet("http", flag.ContinueOnError)
 	fs.SetOutput(w)
-	fs.StringVar(&v, "verb", "GET", "HTTP method")
+	fs.StringVar(&httpVerb, "verb", "GET", "HTTP method")
 
 	fs.Usage = func() {
 		var usageString = `
@@ -42,11 +47,11 @@ http: <options> server`
 		return ErrNoServerSpecified
 	}
 
-	if !slices.Contains(httpMethods, v) {
+	if isValidHttpMethod(httpVerb) {
 		return ErrInvalidMethod
 	}
 
-	c := httpConfig{verb: v}
+	c := httpConfig{verb: httpVerb}
 	c.url = fs.Arg(0)
 
 	body, err := fetchRemoteResource(c)
@@ -58,16 +63,25 @@ http: <options> server`
 	return nil
 }
 
+func isValidHttpMethod(method string) bool {
+	for _, m := range httpMethods {
+		if method == m {
+			return true
+		}
+	}
+	return false
+}
+
 func fetchRemoteResource(hc httpConfig) ([]byte, error) {
 	var err error
 	var r *http.Response
 
 	switch hc.verb {
-	case "GET":
+	case MethodGet:
 		r, err = http.Get(hc.url)
-	case "HEAD":
+	case MethodHead:
 		r, err = http.Head(hc.url)
-	case "POST":
+	case MethodPost:
 		r, err = http.Post(hc.url, "application/json", nil)
 	default:
 		err = ErrInvalidMethod
@@ -76,6 +90,11 @@ func fetchRemoteResource(hc httpConfig) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if r.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("Unxpected status code: %d", r.StatusCode)
+	}
+
 	defer r.Body.Close()
 	return io.ReadAll(r.Body)
 }

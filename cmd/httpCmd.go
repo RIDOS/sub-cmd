@@ -8,14 +8,8 @@ import (
 	"os"
 )
 
-const (
-	MethodGet  = "GET"
-	MethodPost = "POST"
-	MethodHead = "HEAD"
-)
-
 var outputFileName string = "output.html"
-var httpMethods = []string{MethodGet, MethodPost, MethodHead}
+var httpMethods = []string{http.MethodGet, http.MethodPost, http.MethodHead}
 
 type httpConfig struct {
 	url  string
@@ -121,11 +115,11 @@ func fetchRemoteResource(hc httpConfig) ([]byte, error) {
 	var r *http.Response
 
 	switch hc.verb {
-	case MethodGet:
+	case http.MethodGet:
 		r, err = http.Get(hc.url)
-	case MethodHead:
+	case http.MethodHead:
 		r, err = http.Head(hc.url)
-	case MethodPost:
+	case http.MethodPost:
 		r, err = http.Post(hc.url, "application/json", nil)
 	default:
 		err = ErrInvalidMethod

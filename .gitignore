@@ -1,3 +1,4 @@
 console-prog
 .vscode
-output.html
+*.html
+tmp/*

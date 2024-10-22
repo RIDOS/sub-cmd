@@ -11,14 +11,13 @@ import (
 	"github.com/RIDOS/sub-cmd/cmd"
 )
 
-var totalDuration time.Duration = 5
+var totalDuration time.Duration = 10
 var errInvalidSubCommand = errors.New("Invalid sub-command specified")
 
 func printUsage(w io.Writer) {
 	fmt.Fprintf(w, "Usage: mync [http|grpc] -h\n")
 	cmd.HandleHttp(w, []string{"-h"})
 	cmd.HandleGrpc(w, []string{"-h"})
-
 }
 
 func handleCommand(w io.Writer, args []string) error {
@@ -41,6 +40,7 @@ func handleCommand(w io.Writer, args []string) error {
 		}
 	}
 
+	// TODO: string over >120 chars
 	if errors.Is(err, cmd.ErrNoServerSpecified) || errors.Is(err, errInvalidSubCommand) || errors.Is(err, cmd.ErrInvalidMethod) {
 		fmt.Fprintln(w, err)
 		printUsage(w)
@@ -63,6 +63,7 @@ func main() {
 
 	select {
 	case <-ctx.Done():
+		fmt.Fprintln(os.Stdout, "Time out close...")
 		os.Exit(0)
 	case err := <-chanel:
 		if err != nil {

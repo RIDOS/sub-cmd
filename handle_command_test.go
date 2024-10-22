@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os/exec"
 	"testing"
+
 	"github.com/RIDOS/sub-cmd/cmd"
 )
 
@@ -15,6 +16,10 @@ http: A HTTP client.
 http: <options> server
 
 Options: 
+  -body string
+    	Write body form-data for request (format: json)
+  -body-file string
+    	File path for request (format file: json)
   -o string
     	Wtite response in file output.html
   -verb string

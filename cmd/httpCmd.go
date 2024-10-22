@@ -14,44 +14,23 @@ var httpMethods = []string{http.MethodGet, http.MethodPost, http.MethodHead}
 type httpConfig struct {
 	url  string
 	verb string
-}
-
-type Output interface {
-	Write(data []byte) error
-}
-
-type ConsoleOutput struct {
-	wirter io.Writer
-}
-
-func (c *ConsoleOutput) Write(data []byte) error {
-	_, err := fmt.Fprintf(c.wirter, "%s\n", data)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-type FileOutput struct {
-	filePath string
-}
-
-func (fileOutput *FileOutput) Write(data []byte) error {
-	err := os.WriteFile(fileOutput.filePath+outputFileName, data, 0644)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	body []byte
 }
 
 func HandleHttp(w io.Writer, args []string) error {
-	var httpVerb string
-	var filePath string
+	var (
+		httpVerb     string
+		filePath     string
+		bodyFlag     string
+		bodyFileFlag string
+	)
+
 	fs := flag.NewFlagSet("http", flag.ContinueOnError)
 	fs.SetOutput(w)
 	fs.StringVar(&httpVerb, "verb", "GET", "HTTP method")
 	fs.StringVar(&filePath, "o", "", "Wtite response in file "+outputFileName)
+	fs.StringVar(&bodyFlag, "body", "", "Write body form-data for request (format: json)")
+	fs.StringVar(&bodyFileFlag, "body-file", "", "File path for request (format file: json)")
 
 	fs.Usage = func() {
 		var usageString = `
@@ -81,6 +60,24 @@ http: <options> server`
 	c := httpConfig{verb: httpVerb}
 	c.url = fs.Arg(0)
 
+	if len(bodyFlag) > 0 {
+		data, err := parseAndReformatJson(bodyFlag)
+		if err != nil {
+			return ErrInvalidEncoding
+		}
+		c.body = []byte(data)
+	}
+	if len(bodyFileFlag) > 0 {
+		file, err := os.Open(bodyFileFlag)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		if c.body, err = io.ReadAll(file); err != nil {
+			return err
+		}
+	}
+
 	body, err := fetchRemoteResource(c)
 	if err != nil {
 		return err
@@ -108,31 +105,4 @@ func isValidHttpMethod(method string) bool {
 		}
 	}
 	return false
-}
-
-func fetchRemoteResource(hc httpConfig) ([]byte, error) {
-	var err error
-	var r *http.Response
-
-	switch hc.verb {
-	case http.MethodGet:
-		r, err = http.Get(hc.url)
-	case http.MethodHead:
-		r, err = http.Head(hc.url)
-	case http.MethodPost:
-		r, err = http.Post(hc.url, "application/json", nil)
-	default:
-		err = ErrInvalidMethod
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	if r.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Unxpected status code: %d", r.StatusCode)
-	}
-
-	defer r.Body.Close()
-	return io.ReadAll(r.Body)
 }

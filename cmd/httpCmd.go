@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 )
 
 var outputFileName string = "output.html"
@@ -14,35 +13,6 @@ var httpMethods = []string{http.MethodGet, http.MethodPost, http.MethodHead}
 type httpConfig struct {
 	url  string
 	verb string
-}
-
-type Output interface {
-	Write(data []byte) error
-}
-
-type ConsoleOutput struct {
-	wirter io.Writer
-}
-
-func (c *ConsoleOutput) Write(data []byte) error {
-	_, err := fmt.Fprintf(c.wirter, "%s\n", data)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-type FileOutput struct {
-	filePath string
-}
-
-func (fileOutput *FileOutput) Write(data []byte) error {
-	err := os.WriteFile(fileOutput.filePath+outputFileName, data, 0644)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func HandleHttp(w io.Writer, args []string) error {
@@ -120,7 +90,7 @@ func fetchRemoteResource(hc httpConfig) ([]byte, error) {
 	case http.MethodHead:
 		r, err = http.Head(hc.url)
 	case http.MethodPost:
-		r, err = http.Post(hc.url, "application/json", nil)
+		r, err = http.Post(hc.url, "multipart/form-data", nil)
 	default:
 		err = ErrInvalidMethod
 	}

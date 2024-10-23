@@ -20,8 +20,12 @@ func fetchRemoteResource(hc httpConfig) ([]byte, error) {
 	case http.MethodHead:
 		r, err = http.Head(hc.url)
 	case http.MethodPost:
-		reader := bytes.NewReader(hc.body)
-		r, err = http.Post(hc.url, "application/json", reader)
+		contentType, body, err := hc.preparePostData()
+		if err != nil {
+			return nil, err
+		}
+		reader := bytes.NewReader(body)
+		r, err = http.Post(hc.url, contentType, reader)
 	default:
 		err = ErrInvalidMethod
 	}
@@ -53,6 +57,9 @@ func (hc *httpConfig) preparePostData() (string, []byte, error) {
 
 		for _, data := range hc.formData {
 			splitedData := strings.Split(data, "=")
+			if len(splitedData) < 2 {
+				return "", []byte{}, fmt.Errorf("invalid form data: %s", data)
+			}
 			fw, err = mw.CreateFormField(splitedData[0])
 			if err != nil {
 				return "", []byte{}, err

@@ -20,10 +20,11 @@ func startTestHTTPServer(response string) *httptest.Server {
 
 func TestFetchRemoteResource(t *testing.T) {
 	testConfig := []struct {
-		request  string
-		response string
-		method   string
-		err      error
+		request     string
+		response    string
+		method      string
+		err         error
+		contentType string
 	}{
 		{
 			request:  "Hello World!",
@@ -37,9 +38,16 @@ func TestFetchRemoteResource(t *testing.T) {
 			method:   "HEAD",
 		},
 		{
-			request:  "Hello World!",
-			response: "Hello World!",
-			method:   "POST",
+			request:     "Hello World!",
+			response:    "Hello World!",
+			method:      "POST",
+			contentType: "body",
+		},
+		{
+			request:     "name=Richard",
+			response:    "name=Richard",
+			method:      "POST",
+			contentType: "formData",
 		},
 		{
 			request:  "",
@@ -68,6 +76,12 @@ func TestFetchRemoteResource(t *testing.T) {
 		expected := tc.request
 
 		testConfig := httpConfig{url: ts.URL, verb: tc.method}
+		if tc.contentType == "body" {
+			testConfig.body = []byte(tc.request)
+		}
+		if tc.contentType == "formData" {
+			testConfig.formData = []string{tc.request}
+		}
 
 		data, err := fetchRemoteResource(testConfig)
 		if err != nil && err.Error() != tc.err.Error() {

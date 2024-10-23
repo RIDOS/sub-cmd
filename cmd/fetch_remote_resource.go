@@ -2,9 +2,12 @@ package cmd
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
+	"strings"
 )
 
 func fetchRemoteResource(hc httpConfig) ([]byte, error) {
@@ -33,4 +36,34 @@ func fetchRemoteResource(hc httpConfig) ([]byte, error) {
 
 	defer r.Body.Close()
 	return io.ReadAll(r.Body)
+}
+
+func (hc *httpConfig) preparePostData() (string, []byte, error) {
+	var dct string = "application/json"
+	if len(hc.body) > 0 {
+		return dct, hc.body, nil
+	}
+
+	if len(hc.formData) > 0 {
+		var b bytes.Buffer
+		var err error
+		var fw io.Writer
+
+		mw := multipart.NewWriter(&b)
+
+		for _, data := range hc.formData {
+			splitedData := strings.Split(data, "=")
+			fw, err = mw.CreateFormField(splitedData[0])
+			if err != nil {
+				return "", []byte{}, err
+			}
+			fmt.Fprintf(fw, splitedData[1])
+		}
+
+		contentType := mw.FormDataContentType()
+
+		return contentType, b.Bytes(), nil
+	}
+
+	return "", []byte{}, errors.New("Prepare post data fale: Config is empty")
 }

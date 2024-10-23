@@ -43,28 +43,47 @@ func fetchRemoteResource(hc httpConfig) ([]byte, error) {
 }
 
 func (hc *httpConfig) preparePostData() (string, []byte, error) {
-	var dct string = "application/json"
+	var cxt string = "application/json"
 	if len(hc.body) > 0 {
-		return dct, hc.body, nil
+		return cxt, hc.body, nil
 	}
 
-	if len(hc.formData) > 0 {
+	if len(hc.formData) > 0 || len(hc.upload) > 0 {
 		var b bytes.Buffer
 		var err error
 		var fw io.Writer
 
 		mw := multipart.NewWriter(&b)
 
-		for _, data := range hc.formData {
-			splitedData := strings.Split(data, "=")
-			if len(splitedData) < 2 {
-				return "", []byte{}, fmt.Errorf("invalid form data: %s", data)
+		if len(hc.formData) > 0 {
+			for _, data := range hc.formData {
+				splitedData := strings.Split(data, "=")
+				if len(splitedData) < 2 {
+					return "", []byte{}, fmt.Errorf("invalid form data: %s", data)
+				}
+				fw, err = mw.CreateFormField(splitedData[0])
+				if err != nil {
+					return "", []byte{}, err
+				}
+				fmt.Fprintf(fw, splitedData[1])
 			}
-			fw, err = mw.CreateFormField(splitedData[0])
+		}
+
+		if len(hc.upload) > 0 {
+			fw, err = mw.CreateFormFile("filedata", hc.upload)
 			if err != nil {
-				return "", []byte{}, err
+				return "", nil, err
 			}
-			fmt.Fprintf(fw, splitedData[1])
+
+			_, err = io.Copy(fw, hc.Bytes)
+			if err != nil {
+				return "", nil, err
+			}
+		}
+
+		err = mw.Close()
+		if err != nil {
+			return "", nil, err
 		}
 
 		contentType := mw.FormDataContentType()

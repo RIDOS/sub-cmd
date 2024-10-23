@@ -12,11 +12,13 @@ var outputFileName string = "output.html"
 var httpMethods = []string{http.MethodGet, http.MethodPost, http.MethodHead}
 
 type httpConfig struct {
-	url          string
-	verb         string
-	body         []byte
-	formData     []string
-	filePath     string
+	url      string
+	verb     string
+	body     []byte
+	formData []string
+	filePath string
+	upload   string
+	Bytes    io.Reader
 }
 
 type arrayFlags []string
@@ -40,12 +42,15 @@ func isValidHttpMethod(method string) bool {
 }
 
 func flagConfig(w io.Writer, args []string) (httpConfig, error) {
+	hc := httpConfig{}
+
 	var (
 		httpVerb     string
 		filePath     string
 		bodyFlag     string
 		bodyFileFlag string
 		formDataFlag arrayFlags
+		uploadFlag   string
 	)
 
 	fs := flag.NewFlagSet("http", flag.ContinueOnError)
@@ -55,6 +60,7 @@ func flagConfig(w io.Writer, args []string) (httpConfig, error) {
 	fs.StringVar(&bodyFlag, "body", "", "Write body form-data for request (format: json)")
 	fs.StringVar(&bodyFileFlag, "body-file", "", "File path for request (format file: json)")
 	fs.Var(&formDataFlag, "form-data", "Form data params (format: name=value)")
+	fs.StringVar(&uploadFlag, "upload", "", "The path to the file to send files using the POST method")
 
 	fs.Usage = func() {
 		var usageString = `
@@ -67,8 +73,6 @@ http: <options> server`
 		fmt.Fprintln(w, "Options: ")
 		fs.PrintDefaults()
 	}
-
-	hc := httpConfig{}
 
 	err := fs.Parse(args)
 	if err != nil {
@@ -99,6 +103,16 @@ http: <options> server`
 		if hc.body, err = io.ReadAll(file); err != nil {
 			return hc, err
 		}
+	}
+
+	if len(uploadFlag) > 0 {
+		fileData, err := os.Open(uploadFlag)
+		if err != nil {
+			return hc, err
+		}
+		defer fileData.Close()
+		hc.upload = uploadFlag
+		hc.Bytes = fileData
 	}
 
 	hc.url = fs.Arg(0)

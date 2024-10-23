@@ -24,6 +24,8 @@ Options:
     	Form data params (format: name=value)
   -o string
     	Wtite response in file output.html
+  -upload string
+    	The path to the file to send files using the POST method
   -verb string
     	HTTP method (default "GET")
 

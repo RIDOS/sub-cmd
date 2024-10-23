@@ -20,6 +20,8 @@ Options:
     	Write body form-data for request (format: json)
   -body-file string
     	File path for request (format file: json)
+  -form-data value
+    	Form data params (format: name=value)
   -o string
     	Wtite response in file output.html
   -verb string

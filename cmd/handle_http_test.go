@@ -16,6 +16,8 @@ Options:
     	Write body form-data for request (format: json)
   -body-file string
     	File path for request (format file: json)
+  -form-data value
+    	Form data params (format: name=value)
   -o string
     	Wtite response in file output.html
   -verb string
@@ -40,11 +42,11 @@ Options:
 			err:  ErrInvalidMethod,
 		},
 		{
-			args:   []string{"-verb", "PUT", "http://localhost"},
+			args: []string{"-verb", "PUT", "http://localhost"},
 			err:  ErrInvalidMethod,
 		},
 		{
-			args:   []string{"-verb", "UPDATE", "http://localhost"},
+			args: []string{"-verb", "UPDATE", "http://localhost"},
 			err:  ErrInvalidMethod,
 		},
 	}

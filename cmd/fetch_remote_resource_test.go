@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -44,6 +45,12 @@ func TestFetchRemoteResource(t *testing.T) {
 			contentType: "body",
 		},
 		{
+			request:     "nameRichard",
+			method:      "POST",
+			contentType: "formData",
+			err:         errors.New("invalid form data: nameRichard"),
+		},
+		{
 			request:     "name=Richard",
 			response:    "name=Richard",
 			method:      "POST",
@@ -85,10 +92,10 @@ func TestFetchRemoteResource(t *testing.T) {
 
 		data, err := fetchRemoteResource(testConfig)
 		if err != nil && err.Error() != tc.err.Error() {
-			t.Fatal(err)
+			t.Errorf("Expected %s, got %s", tc.err, err)
 		}
 
-		if string(data) != expected {
+		if string(data) != expected && len(tc.err.Error()) == 0 {
 			t.Errorf("Expected %s, got %s", expected, string(data))
 		}
 	}

@@ -10,7 +10,11 @@ func HandleHttp(w io.Writer, args []string) error {
 		return err
 	}
 
-	body, err := fetchRemoteResource(hc)
+	client := createHTTPClientWithTimeout()
+	if hc.disableRedirect {
+		client.CheckRedirect = redirectPolicyFunc
+	}
+	body, err := fetchRemoteResource(client, hc)
 	if err != nil {
 		return err
 	}

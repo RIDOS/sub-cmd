@@ -7,22 +7,24 @@ import (
 	"net/http"
 )
 
-func fetchRemoteResource(hc httpConfig) ([]byte, error) {
-	var err error
-	var r *http.Response
+func fetchRemoteResource(client *http.Client, hc httpConfig) ([]byte, error) {
+	var (
+		err error
+		r   *http.Response
+	)
 
 	switch hc.verb {
 	case http.MethodGet:
-		r, err = http.Get(hc.url)
+		r, err = client.Get(hc.url)
 	case http.MethodHead:
-		r, err = http.Head(hc.url)
+		r, err = client.Head(hc.url)
 	case http.MethodPost:
 		contentType, body, err := hc.preparePostData()
 		if err != nil {
 			return nil, err
 		}
 		reader := bytes.NewReader(body)
-		r, err = http.Post(hc.url, contentType, reader)
+		r, err = client.Post(hc.url, contentType, reader)
 	default:
 		err = ErrInvalidMethod
 	}
@@ -31,10 +33,11 @@ func fetchRemoteResource(hc httpConfig) ([]byte, error) {
 		return nil, err
 	}
 
+	defer r.Body.Close()
+
 	if r.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("Unxpected status code: %d", r.StatusCode)
 	}
 
-	defer r.Body.Close()
 	return io.ReadAll(r.Body)
 }

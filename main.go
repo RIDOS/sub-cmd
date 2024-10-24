@@ -40,7 +40,6 @@ func handleCommand(w io.Writer, args []string) error {
 		}
 	}
 
-	// TODO: string over >120 chars
 	if errors.Is(err, cmd.ErrNoServerSpecified) || errors.Is(err, errInvalidSubCommand) || errors.Is(err, cmd.ErrInvalidMethod) {
 		fmt.Fprintln(w, err)
 		printUsage(w)
@@ -67,6 +66,7 @@ func main() {
 		os.Exit(0)
 	case err := <-chanel:
 		if err != nil {
+			fmt.Println(err)
 			os.Exit(1)
 		}
 	}

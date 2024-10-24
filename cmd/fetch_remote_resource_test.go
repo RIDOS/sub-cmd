@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
 )
 
 func startTestHTTPServer(response string) *httptest.Server {
@@ -90,7 +92,8 @@ func TestFetchRemoteResource(t *testing.T) {
 			testConfig.formData = []string{tc.request}
 		}
 
-		data, err := fetchRemoteResource(testConfig)
+		client := createHTTPClientWithTimeout(withTimeOut(20 * time.Millisecond))
+		data, err := fetchRemoteResource(client, testConfig)
 		if err != nil && err.Error() != tc.err.Error() {
 			t.Errorf("Expected %s, got %s", tc.err, err)
 		}
@@ -98,5 +101,37 @@ func TestFetchRemoteResource(t *testing.T) {
 		if string(data) != expected && len(tc.err.Error()) == 0 {
 			t.Errorf("Expected %s, got %s", expected, string(data))
 		}
+	}
+}
+
+func startBadTestHTTPServerV2(shutdownServer chan struct{}) *httptest.Server {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		<-shutdownServer
+		fmt.Fprint(w, "Hello World")
+	}))
+	return ts
+}
+
+func TestFetchBadRemoteResourceV2(t *testing.T) {
+	shutdownServer := make(chan struct{})
+	ts := startBadTestHTTPServerV2(shutdownServer)
+	defer ts.Close()
+
+	defer func() {
+		shutdownServer <- struct{}{}
+	}()
+
+	client := createHTTPClientWithTimeout(withTimeOut(20 * time.Millisecond))
+	hc := httpConfig{
+		url:  ts.URL,
+		verb: "GET",
+	}
+	_, err := fetchRemoteResource(client, hc)
+	if err == nil {
+		t.Fatalf("Expected not-nil error")
+	}
+
+	if !strings.Contains(err.Error(), "context deadline exceeded") {
+		t.Fatalf("Expected error to contain: context deadline exceeded, Got: %v", err.Error())
 	}
 }

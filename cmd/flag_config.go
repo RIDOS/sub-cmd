@@ -1,9 +1,12 @@
 package cmd
 
 import (
+	"bytes"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"os"
 )
@@ -121,4 +124,56 @@ http: <options> server`
 	hc.formData = formDataFlag
 
 	return hc, nil
+}
+
+func (hc *httpConfig) preparePostData() (string, []byte, error) {
+	var cxt string = "application/json"
+	if len(hc.body) > 0 {
+		return cxt, hc.body, nil
+	}
+
+	if len(hc.formData) > 0 || len(hc.upload) > 0 {
+		var b bytes.Buffer
+		var err error
+		var fw io.Writer
+
+		mw := multipart.NewWriter(&b)
+
+		if len(hc.formData) > 0 {
+			for _, data := range hc.formData {
+				splitedData, err := strToParams(data)
+				if err != nil {
+					return "", nil, err
+				}
+				fw, err = mw.CreateFormField(splitedData[0])
+				if err != nil {
+					return "", nil, err
+				}
+				fmt.Fprintf(fw, splitedData[1])
+			}
+		}
+
+		if len(hc.upload) > 0 {
+			fw, err = mw.CreateFormFile("filedata", hc.upload)
+			if err != nil {
+				return "", nil, err
+			}
+
+			_, err = io.Copy(fw, hc.Bytes)
+			if err != nil {
+				return "", nil, err
+			}
+		}
+
+		err = mw.Close()
+		if err != nil {
+			return "", nil, err
+		}
+
+		contentType := mw.FormDataContentType()
+
+		return contentType, b.Bytes(), nil
+	}
+
+	return "", []byte{}, errors.New("Prepare post data fale: Config is empty")
 }

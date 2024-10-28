@@ -24,6 +24,8 @@ Options:
     	Disable redirect for response
   -form-data value
     	Form data params (format: name=value)
+  -header value
+    	Request Headers (format: name=value)
   -o string
     	Wtite response in file output.html
   -upload string

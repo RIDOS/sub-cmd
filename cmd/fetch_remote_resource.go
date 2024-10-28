@@ -29,6 +29,12 @@ func fetchRemoteResource(client *http.Client, hc httpConfig) ([]byte, error) {
 		err = ErrInvalidMethod
 	}
 
+	if len(hc.headers) > 0 {
+		for k, v := range hc.headers {
+			r.Header.Add(k, v)
+		}
+	}
+
 	if err != nil {
 		return nil, err
 	}

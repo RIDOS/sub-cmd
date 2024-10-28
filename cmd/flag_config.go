@@ -19,6 +19,7 @@ type httpConfig struct {
 	verb            string
 	body            []byte
 	formData        []string
+	headers         map[string]string
 	filePath        string
 	upload          string
 	Bytes           io.Reader
@@ -45,6 +46,17 @@ func isValidHttpMethod(method string) bool {
 	return false
 }
 
+
+type mapFlags map[string]string
+
+func (m *mapFlags) String() string {
+	return fmt.Sprintf("%v", *m)
+}
+
+func (m *mapFlags) Set(key, value string) error {
+	m[key] = value
+} 
+
 func flagConfig(w io.Writer, args []string) (httpConfig, error) {
 	hc := httpConfig{}
 
@@ -54,6 +66,7 @@ func flagConfig(w io.Writer, args []string) (httpConfig, error) {
 		bodyFlag            string
 		bodyFileFlag        string
 		formDataFlag        arrayFlags
+		headersFlag         mapFlags
 		uploadFlag          string
 		disableRedirectFlag bool
 	)
@@ -65,6 +78,7 @@ func flagConfig(w io.Writer, args []string) (httpConfig, error) {
 	fs.StringVar(&bodyFlag, "body", "", "Write body form-data for request (format: json)")
 	fs.StringVar(&bodyFileFlag, "body-file", "", "File path for request (format file: json)")
 	fs.Var(&formDataFlag, "form-data", "Form data params (format: name=value)")
+	fs.Var(&headersFlag, "header", "Request Headers (format: name=value)")
 	fs.StringVar(&uploadFlag, "upload", "", "The path to the file to send files using the POST method")
 	fs.BoolVar(&disableRedirectFlag, "disable-redirect", false, "Disable redirect for response")
 
@@ -125,6 +139,7 @@ http: <options> server`
 	hc.verb = httpVerb
 	hc.filePath = filePath
 	hc.formData = formDataFlag
+	hc.headers = headersFlag
 	hc.disableRedirect = disableRedirectFlag
 
 	return hc, nil

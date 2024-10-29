@@ -9,6 +9,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"strings"
 )
 
 var outputFileName string = "output.html"
@@ -19,30 +20,11 @@ type httpConfig struct {
 	verb            string
 	body            []byte
 	formData        []string
+	headers         map[string]string
 	filePath        string
 	upload          string
 	Bytes           io.Reader
 	disableRedirect bool
-}
-
-type arrayFlags []string
-
-func (a *arrayFlags) String() string {
-	return fmt.Sprintf("%v", *a)
-}
-
-func (a *arrayFlags) Set(value string) error {
-	*a = append(*a, value)
-	return nil
-}
-
-func isValidHttpMethod(method string) bool {
-	for _, m := range httpMethods {
-		if method == m {
-			return true
-		}
-	}
-	return false
 }
 
 func flagConfig(w io.Writer, args []string) (httpConfig, error) {
@@ -54,6 +36,7 @@ func flagConfig(w io.Writer, args []string) (httpConfig, error) {
 		bodyFlag            string
 		bodyFileFlag        string
 		formDataFlag        arrayFlags
+		headersFlag         mapFlags
 		uploadFlag          string
 		disableRedirectFlag bool
 	)
@@ -65,6 +48,7 @@ func flagConfig(w io.Writer, args []string) (httpConfig, error) {
 	fs.StringVar(&bodyFlag, "body", "", "Write body form-data for request (format: json)")
 	fs.StringVar(&bodyFileFlag, "body-file", "", "File path for request (format file: json)")
 	fs.Var(&formDataFlag, "form-data", "Form data params (format: name=value)")
+	fs.Var(&headersFlag, "header", "Request Headers (format: name=value)")
 	fs.StringVar(&uploadFlag, "upload", "", "The path to the file to send files using the POST method")
 	fs.BoolVar(&disableRedirectFlag, "disable-redirect", false, "Disable redirect for response")
 
@@ -125,6 +109,7 @@ http: <options> server`
 	hc.verb = httpVerb
 	hc.filePath = filePath
 	hc.formData = formDataFlag
+	hc.headers = headersFlag
 	hc.disableRedirect = disableRedirectFlag
 
 	return hc, nil
@@ -180,4 +165,46 @@ func (hc *httpConfig) preparePostData() (string, []byte, error) {
 	}
 
 	return "", []byte{}, errors.New("Prepare post data fale: Config is empty")
+}
+
+type arrayFlags []string
+
+func (a *arrayFlags) String() string {
+	return fmt.Sprintf("%v", *a)
+}
+
+func (a *arrayFlags) Set(value string) error {
+	*a = append(*a, value)
+	return nil
+}
+
+func isValidHttpMethod(method string) bool {
+	for _, m := range httpMethods {
+		if method == m {
+			return true
+		}
+	}
+	return false
+}
+
+type mapFlags map[string]string
+
+func (m *mapFlags) String() string {
+	return fmt.Sprintf("%v", *m)
+}
+
+func (m *mapFlags) Set(input string) error {
+	parts := strings.SplitN(input, "=", 2)
+	if len(parts) != 2 {
+		return fmt.Errorf("invalid format: %s, expected key=value", input)
+	}
+
+	key, value := parts[0], parts[1]
+
+	if *m == nil {
+		*m = make(mapFlags)
+	}
+	(*m)[key] = value
+
+	return nil
 }

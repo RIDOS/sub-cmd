@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"testing"
 )
@@ -20,6 +21,8 @@ Options:
     	Disable redirect for response
   -form-data value
     	Form data params (format: name=value)
+  -header value
+    	Request Headers (format: name=value)
   -o string
     	Wtite response in file output.html
   -upload string
@@ -57,7 +60,7 @@ Options:
 
 	byteBuf := new(bytes.Buffer)
 	for _, tc := range testConfig {
-		err := HandleHttp(byteBuf, tc.args)
+		err := HandleHttp(context.Background(), byteBuf, tc.args)
 
 		// Error test.
 		if err != nil {

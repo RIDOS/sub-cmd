@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -93,7 +94,7 @@ func TestFetchRemoteResource(t *testing.T) {
 		}
 
 		client := createHTTPClientWithTimeout(withTimeOut(20 * time.Millisecond))
-		data, err := fetchRemoteResource(client, testConfig)
+		data, err := fetchRemoteResource(context.Background(), client, testConfig)
 		if err != nil && err.Error() != tc.err.Error() {
 			t.Errorf("Expected %s, got %s", tc.err, err)
 		}
@@ -126,7 +127,7 @@ func TestFetchBadRemoteResourceV2(t *testing.T) {
 		url:  ts.URL,
 		verb: "GET",
 	}
-	_, err := fetchRemoteResource(client, hc)
+	_, err := fetchRemoteResource(context.Background(), client, hc)
 	if err == nil {
 		t.Fatalf("Expected not-nil error")
 	}

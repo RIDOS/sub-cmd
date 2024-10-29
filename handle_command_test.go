@@ -2,9 +2,11 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"os/exec"
 	"testing"
+	"time"
 
 	"github.com/RIDOS/sub-cmd/cmd"
 )
@@ -90,9 +92,12 @@ Options:
 		},
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
 	byteBuf := new(bytes.Buffer)
 	for _, tc := range testConfig {
-		err := handleCommand(byteBuf, tc.args)
+		err := handleCommand(ctx, byteBuf, tc.args)
 
 		if tc.err == nil && err != nil {
 			t.Fatalf("Expected nill error, got \n%v\n", err)

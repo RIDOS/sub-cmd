@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"testing"
 )
@@ -59,7 +60,7 @@ Options:
 
 	byteBuf := new(bytes.Buffer)
 	for _, tc := range testConfig {
-		err := HandleHttp(byteBuf, tc.args)
+		err := HandleHttp(context.Background(), byteBuf, tc.args)
 
 		// Error test.
 		if err != nil {

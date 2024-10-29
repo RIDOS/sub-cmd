@@ -14,13 +14,13 @@ import (
 var totalDuration time.Duration = 10
 var errInvalidSubCommand = errors.New("Invalid sub-command specified")
 
-func printUsage(w io.Writer) {
+func printUsage(ctx context.Context,w io.Writer) {
 	fmt.Fprintf(w, "Usage: mync [http|grpc] -h\n")
-	cmd.HandleHttp(w, []string{"-h"})
+	cmd.HandleHttp(ctx, w, []string{"-h"})
 	cmd.HandleGrpc(w, []string{"-h"})
 }
 
-func handleCommand(w io.Writer, args []string) error {
+func handleCommand(ctx context.Context, w io.Writer, args []string) error {
 	var err error
 
 	if len(args) < 1 {
@@ -28,13 +28,13 @@ func handleCommand(w io.Writer, args []string) error {
 	} else {
 		switch args[0] {
 		case "http":
-			err = cmd.HandleHttp(w, args[1:])
+			err = cmd.HandleHttp(ctx, w, args[1:])
 		case "grpc":
 			err = cmd.HandleGrpc(w, args[1:])
 		case "-h":
-			printUsage(w)
+			printUsage(ctx, w)
 		case "--help":
-			printUsage(w)
+			printUsage(ctx, w)
 		default:
 			err = errInvalidSubCommand
 		}
@@ -42,7 +42,7 @@ func handleCommand(w io.Writer, args []string) error {
 
 	if errors.Is(err, cmd.ErrNoServerSpecified) || errors.Is(err, errInvalidSubCommand) || errors.Is(err, cmd.ErrInvalidMethod) {
 		fmt.Fprintln(w, err)
-		printUsage(w)
+		printUsage(ctx, w)
 	}
 
 	return err
@@ -56,7 +56,7 @@ func main() {
 	chanel := make(chan error, 1)
 
 	go func() {
-		err := handleCommand(os.Stdout, os.Args[1:])
+		err := handleCommand(ctx, os.Stdout, os.Args[1:])
 		chanel <- err
 	}()
 

@@ -9,6 +9,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"strings"
 )
 
 var outputFileName string = "output.html"
@@ -25,37 +26,6 @@ type httpConfig struct {
 	Bytes           io.Reader
 	disableRedirect bool
 }
-
-type arrayFlags []string
-
-func (a *arrayFlags) String() string {
-	return fmt.Sprintf("%v", *a)
-}
-
-func (a *arrayFlags) Set(value string) error {
-	*a = append(*a, value)
-	return nil
-}
-
-func isValidHttpMethod(method string) bool {
-	for _, m := range httpMethods {
-		if method == m {
-			return true
-		}
-	}
-	return false
-}
-
-
-type mapFlags map[string]string
-
-func (m *mapFlags) String() string {
-	return fmt.Sprintf("%v", *m)
-}
-
-func (m *mapFlags) Set(key, value string) error {
-	m[key] = value
-} 
 
 func flagConfig(w io.Writer, args []string) (httpConfig, error) {
 	hc := httpConfig{}
@@ -195,4 +165,46 @@ func (hc *httpConfig) preparePostData() (string, []byte, error) {
 	}
 
 	return "", []byte{}, errors.New("Prepare post data fale: Config is empty")
+}
+
+type arrayFlags []string
+
+func (a *arrayFlags) String() string {
+	return fmt.Sprintf("%v", *a)
+}
+
+func (a *arrayFlags) Set(value string) error {
+	*a = append(*a, value)
+	return nil
+}
+
+func isValidHttpMethod(method string) bool {
+	for _, m := range httpMethods {
+		if method == m {
+			return true
+		}
+	}
+	return false
+}
+
+type mapFlags map[string]string
+
+func (m *mapFlags) String() string {
+	return fmt.Sprintf("%v", *m)
+}
+
+func (m *mapFlags) Set(input string) error {
+	parts := strings.SplitN(input, "=", 2)
+	if len(parts) != 2 {
+		return fmt.Errorf("invalid format: %s, expected key=value", input)
+	}
+
+	key, value := parts[0], parts[1]
+
+	if *m == nil {
+		*m = make(mapFlags)
+	}
+	(*m)[key] = value
+
+	return nil
 }

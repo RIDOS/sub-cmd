@@ -21,6 +21,42 @@ The basic usage of the application is as follows:
 sub-cmd [http|grpc] -h
 ```
 
+Example:
+```bash
+➜  sub-cmd git:(main) ✗ ./mync -h
+Usage: mync [http|grpc] -h
+
+http: A HTTP client.
+http: <options> server
+
+Options:
+  -body string
+        Write body form-data for request (format: json)
+  -body-file string
+        File path for request (format file: json)
+  -disable-redirect
+        Disable redirect for response
+  -form-data value
+        Form data params (format: name=value)
+  -header value
+        Request Headers (format: name=value)
+  -o string
+        Wtite response in file output.html
+  -upload string
+        The path to the file to send files using the POST method
+  -verb string
+        HTTP method (default "GET")
+
+grpc: A gRPC client.
+grpc: <options> server
+
+Options:
+  -body string
+        Body of request
+  -method string
+        Method to call
+```
+
 ### Subcommands
 
 - **http**: A simple HTTP client.
